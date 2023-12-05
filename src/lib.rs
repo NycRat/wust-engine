@@ -9,6 +9,8 @@ pub mod objs;
 pub mod state;
 pub mod transformations;
 pub mod utils;
+pub mod object;
+pub mod vec3;
 
 const SPEED: f32 = 0.005;
 
@@ -35,8 +37,6 @@ fn start() -> Result<(), JsValue> {
 
     gl.enable(WebGl2RenderingContext::CULL_FACE);
     gl.enable(WebGl2RenderingContext::DEPTH_TEST);
-
-    let cube_obj = objs::get_suzanne_obj();
 
     let vertex_shader = utils::create_shader(
         &gl,
@@ -136,7 +136,7 @@ fn start() -> Result<(), JsValue> {
         let closure = Closure::<dyn FnMut(_)>::new(move |event: web_sys::KeyboardEvent| {
             let mut state = state.borrow_mut();
             let key = event.key();
-            state.keys_pressed.insert(key);
+            state.keys_pressed.insert(key.to_lowercase());
         });
         window
             .add_event_listener_with_callback("keydown", closure.as_ref().unchecked_ref())
@@ -149,7 +149,7 @@ fn start() -> Result<(), JsValue> {
         let closure = Closure::<dyn FnMut(_)>::new(move |event: web_sys::KeyboardEvent| {
             let mut state = state.borrow_mut();
             let key = event.key();
-            state.keys_pressed.remove(&key);
+            state.keys_pressed.remove(&key.to_lowercase());
         });
         window
             .add_event_listener_with_callback("keyup", closure.as_ref().unchecked_ref())
@@ -246,7 +246,9 @@ fn start() -> Result<(), JsValue> {
                 &world_inverse_transposed_matrix,
             );
 
-            draw(&gl, vertices_len);
+            gl.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT);
+
+            gl.draw_arrays(WebGl2RenderingContext::TRIANGLES, 0, vertices_len);
 
             window
                 .request_animation_frame(
@@ -272,11 +274,7 @@ fn start() -> Result<(), JsValue> {
         )
         .unwrap();
 
+    // outer: for v in m { 'inner: for i in v { if i < 0 { println!("Found {}", i); break 'outer; } } }
+
     Ok(())
-}
-
-pub fn draw(gl: &WebGl2RenderingContext, vertices_len: i32) {
-    gl.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT);
-
-    gl.draw_arrays(WebGl2RenderingContext::TRIANGLES, 0, vertices_len);
 }
