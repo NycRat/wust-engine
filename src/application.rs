@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use wasm_bindgen::prelude::*;
 use web_sys::{HtmlCanvasElement, WebGl2RenderingContext, WebGlProgram};
 
-use crate::{objs, state::State, transformations, utils};
+use crate::{objs, state::State, transformations, utils, vec3::Vec3};
 
 const SPEED: f32 = 5.0;
 
@@ -157,7 +157,15 @@ impl Application {
                             state.camera_position[i] -= target[i] * SPEED * delta_time;
                         }
                     }
+                    if state.keys_pressed.contains(" ") {
+                        state.camera_position[1] += SPEED * delta_time;
+                    }
+                    if state.keys_pressed.contains("shift") {
+                        state.camera_position[1] -= SPEED * delta_time;
+                    }
                 }
+
+                // web_sys::console::log_1(&format!("{state:?}").into());
 
                 Self::update(&mut state, delta_time);
                 Self::render(&gl, &program, &state);
@@ -190,6 +198,10 @@ impl Application {
     }
 
     fn update(state: &mut State, delta_time: f32) {
+        if delta_time > 0.1 {
+            web_sys::console::error_1(&format!("DELTA_TIME: {delta_time}s").into());
+            return;
+        }
         for objects in &mut state.objects_list {
             objects.update(delta_time);
         }
