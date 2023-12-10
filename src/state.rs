@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 
-use obj::Obj;
+use web_sys::{WebGl2RenderingContext, WebGlProgram};
 
-use crate::{mouse::Mouse, object::Object, objs, vec3::Vec3};
+use crate::{mouse::Mouse, object::Objects, objs};
 
 #[derive(Debug)]
 pub struct State {
@@ -11,26 +11,18 @@ pub struct State {
     pub pointer_locked: bool,
     pub mouse: Mouse,
     pub last_tick: f64,
-    pub suzanne_rotation: f32,
-    pub objs: Vec<Obj>,
-    pub objects: Vec<Object>,
+    pub objects_list: Vec<Objects>,
 }
 
 impl State {
-    pub fn new() -> Self {
+    pub fn new(gl: &WebGl2RenderingContext, program: &WebGlProgram) -> Self {
         State {
             camera_position: [0.0, 0.0, 0.0],
             keys_pressed: HashSet::new(),
             pointer_locked: false,
             mouse: Mouse::new(1.0 / 2500.0),
             last_tick: web_sys::js_sys::Date::now(),
-            suzanne_rotation: 0.0,
-            objs: vec![objs::get_cube_obj()],
-            objects: vec![Object::new(
-                0,
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(0.0, 0.0, 0.0),
-            )],
+            objects_list: vec![Objects::new(gl, program, objs::get_suzanne_obj())],
         }
     }
 }

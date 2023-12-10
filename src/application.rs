@@ -1,11 +1,11 @@
 use std::{cell::RefCell, rc::Rc};
 
 use wasm_bindgen::prelude::*;
-use web_sys::{HtmlCanvasElement, WebGl2RenderingContext};
+use web_sys::{HtmlCanvasElement, WebGl2RenderingContext, WebGlProgram};
 
 use crate::{objs, state::State, transformations, utils};
 
-const SPEED: f32 = 0.005;
+const SPEED: f32 = 5.0;
 
 pub struct Application {}
 
@@ -46,95 +46,14 @@ impl Application {
 
         let program = utils::create_program(&gl, &vertex_shader, &fragment_shader);
 
-        let attrib_position_l = gl.get_attrib_location(&program, "a_pos") as u32;
-        let attrib_normal_l = gl.get_attrib_location(&program, "a_normal") as u32;
-
-        let uniform_transformation_l = gl.get_uniform_location(&program, "u_transformation");
-        let uniform_world_invserse_transposed_l =
-            gl.get_uniform_location(&program, "u_world_inverse_transposed");
         let uniform_reverse_light_direction_l =
             gl.get_uniform_location(&program, "u_reverse_light_direction");
 
-        // START
+        let state = Rc::new(RefCell::new(State::new(&gl, &program)));
 
-        let suzanne_obj = objs::get_suzanne_obj();
-
-        let vao_suzanne = gl.create_vertex_array();
-        gl.bind_vertex_array(vao_suzanne.as_ref());
-
-        let vertices_buffer = gl.create_buffer();
-        gl.bind_buffer(
-            WebGl2RenderingContext::ARRAY_BUFFER,
-            vertices_buffer.as_ref(),
-        );
-
-        let vertices_len = objs::set_positions(&gl, &suzanne_obj);
-
-        gl.enable_vertex_attrib_array(attrib_position_l);
-        gl.vertex_attrib_pointer_with_i32(
-            attrib_position_l,
-            3,
-            WebGl2RenderingContext::FLOAT,
-            false,
-            0,
-            0,
-        );
-
-        let normal_buffer = gl.create_buffer();
-        gl.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, normal_buffer.as_ref());
-        objs::set_normals(&gl, &suzanne_obj);
-
-        gl.enable_vertex_attrib_array(attrib_normal_l);
-        gl.vertex_attrib_pointer_with_i32(
-            attrib_normal_l,
-            3,
-            WebGl2RenderingContext::FLOAT,
-            false,
-            0,
-            0,
-        );
-
-        // END
-
-        let vao_cube = gl.create_vertex_array();
-        gl.bind_vertex_array(vao_cube.as_ref());
-
-        let cube_vertices_buffer = gl.create_buffer();
-        gl.bind_buffer(
-            WebGl2RenderingContext::ARRAY_BUFFER,
-            cube_vertices_buffer.as_ref(),
-        );
-
-        let cube_obj = objs::get_cube_obj();
-        let cube_vertices_len = objs::set_positions(&gl, &cube_obj);
-
-        gl.enable_vertex_attrib_array(attrib_position_l);
-        gl.vertex_attrib_pointer_with_i32(
-            attrib_position_l,
-            3,
-            WebGl2RenderingContext::FLOAT,
-            false,
-            0,
-            0,
-        );
-
-        let normal_buffer = gl.create_buffer();
-        gl.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, normal_buffer.as_ref());
-        objs::set_normals(&gl, &cube_obj);
-
-        gl.enable_vertex_attrib_array(attrib_normal_l);
-        gl.vertex_attrib_pointer_with_i32(
-            attrib_normal_l,
-            3,
-            WebGl2RenderingContext::FLOAT,
-            false,
-            0,
-            0,
-        );
-
-        // END2
-
-        let state = Rc::new(RefCell::new(State::new()));
+        gl.use_program(Some(&program));
+        gl.uniform3f(uniform_reverse_light_direction_l.as_ref(), 0.5, 0.7, 1.0);
+        gl.clear_color(0.2, 0.1, 0.2, 1.0);
 
         {
             let state = state.clone();
@@ -211,20 +130,12 @@ impl Application {
             let window = window.clone();
 
             *update_closure2.borrow_mut() = Some(Closure::<dyn FnMut()>::new(move || {
-                gl.use_program(Some(&program));
-                gl.uniform3f(uniform_reverse_light_direction_l.as_ref(), 0.5, 0.7, 1.0);
-                gl.bind_vertex_array(vao_suzanne.as_ref());
-                gl.clear_color(0.2, 0.1, 0.2, 1.0);
-                gl.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT);
-
                 let (size_x, size_y) = utils::get_window_size();
                 let mut state = state.borrow_mut();
 
                 let now = web_sys::js_sys::Date::now();
-                let delta_time = (now - state.last_tick) as f32;
+                let delta_time = (now - state.last_tick) as f32 / 1000.0;
                 state.last_tick = now;
-
-                state.suzanne_rotation += std::f32::consts::PI * delta_time / 1000.0 / 2.0;
 
                 if state.pointer_locked {
                     let target = state.mouse.get_target();
@@ -248,50 +159,8 @@ impl Application {
                     }
                 }
 
-                let projection_matrix = transformations::perspective(
-                    std::f32::consts::PI / (3.0),
-                    size_x / size_y,
-                    0.5,
-                    200.0,
-                );
-
-                let camera_matrix = transformations::look_at(
-                    &state.camera_position,
-                    &state.mouse.get_look_at_target(&state.camera_position),
-                );
-
-                let view_matrix = utils::invert_matrix(camera_matrix);
-                let view_projection_matrix = utils::matrix_multiply(projection_matrix, view_matrix);
-
-                let world_matrix = utils::matrix_multiply(
-                    transformations::translation(0.0, 0.0, -5.0),
-                    transformations::rotation_y(state.suzanne_rotation),
-                );
-
-                let world_view_projection_matrix =
-                    utils::matrix_multiply(view_projection_matrix, world_matrix);
-
-                // INVERSED FOR NORMALS
-                let world_inverse_transposed_matrix =
-                    utils::transpose(utils::invert_matrix(world_matrix));
-
-                gl.uniform_matrix4fv_with_f32_array(
-                    uniform_transformation_l.as_ref(),
-                    true,
-                    &world_view_projection_matrix,
-                );
-
-                gl.uniform_matrix4fv_with_f32_array(
-                    uniform_world_invserse_transposed_l.as_ref(),
-                    true,
-                    &world_inverse_transposed_matrix,
-                );
-
-                gl.bind_vertex_array(vao_suzanne.as_ref());
-                gl.draw_arrays(WebGl2RenderingContext::TRIANGLES, 0, vertices_len);
-
-                gl.bind_vertex_array(vao_cube.as_ref());
-                gl.draw_arrays(WebGl2RenderingContext::LINE_LOOP, 0, cube_vertices_len);
+                Self::update(&mut state, delta_time);
+                Self::render(&gl, &program, &state);
 
                 window
                     .request_animation_frame(
@@ -317,8 +186,25 @@ impl Application {
             )
             .unwrap();
 
-        // outer: for v in m { 'inner: for i in v { if i < 0 { println!("Found {}", i); break 'outer; } } }
-
         Ok(())
+    }
+
+    fn update(state: &mut State, delta_time: f32) {
+        for objects in &mut state.objects_list {
+            objects.update(delta_time);
+        }
+    }
+
+    fn render(gl: &WebGl2RenderingContext, program: &WebGlProgram, state: &State) {
+        let camera_matrix = transformations::look_at(
+            &state.camera_position,
+            &state.mouse.get_look_at_target(&state.camera_position),
+        );
+
+        let view_matrix = utils::invert_matrix(camera_matrix);
+        gl.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT);
+        for objects in &state.objects_list {
+            objects.render(&gl, &program, view_matrix);
+        }
     }
 }
