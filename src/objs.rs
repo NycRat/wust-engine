@@ -2,6 +2,11 @@ use std::io::BufReader;
 
 use web_sys::WebGl2RenderingContext;
 
+pub fn get_cube_obj() -> obj::Obj {
+    let input = BufReader::new(include_str!("./cube.obj").as_bytes());
+    obj::load_obj(input).unwrap()
+}
+
 pub fn get_suzanne_obj() -> obj::Obj {
     let input = BufReader::new(include_str!("./suzanne.obj").as_bytes());
     obj::load_obj(input).unwrap()

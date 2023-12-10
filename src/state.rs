@@ -25,7 +25,7 @@ impl State {
             mouse: Mouse::new(1.0 / 2500.0),
             last_tick: web_sys::js_sys::Date::now(),
             suzanne_rotation: 0.0,
-            objs: vec![objs::get_suzanne_obj()],
+            objs: vec![objs::get_cube_obj()],
             objects: vec![Object::new(
                 0,
                 Vec3::new(0.0, 0.0, 0.0),
