@@ -5,7 +5,7 @@ use web_sys::{HtmlCanvasElement, WebGl2RenderingContext, WebGlProgram};
 
 use crate::{objs, state::State, transformations, utils, vec3::Vec3};
 
-const SPEED: f32 = 5.0;
+const SPEED: f32 = 8.0;
 
 pub struct Application {}
 
@@ -163,6 +163,10 @@ impl Application {
                     if state.keys_pressed.contains("shift") {
                         state.camera_position[1] -= SPEED * delta_time;
                     }
+                }
+
+                if state.camera_position[1] < -2.99 {
+                    state.camera_position[1] = -2.99;
                 }
 
                 // web_sys::console::log_1(&format!("{state:?}").into());

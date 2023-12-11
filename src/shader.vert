@@ -8,11 +8,13 @@ in vec3 a_normal;
 
 uniform mat4 u_transformation;
 uniform mat4 u_world_inverse_transposed;
+// uniform vec4 u_color;
 
-// out vec4 v_color;
+out vec4 v_color;
 out vec3 v_normal;
 
 void main() {
   gl_Position = a_pos * u_transformation ;
   v_normal = a_normal * mat3(u_world_inverse_transposed);
+  // v_color = gl_Position;
 }

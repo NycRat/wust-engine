@@ -35,10 +35,14 @@ impl State {
                         Object {
                             position: [-5.0, 0.0, -3.0].into(),
                             velocity: [3.0, 1.0, 2.0].into(),
+                            color: [0.8, 0.2, 0.8].into(),
+                            physics_enabled: true,
                         },
                         Object {
                             position: [2.0, 1.0, -3.0].into(),
                             velocity: [0.0, 0.0, 0.0].into(),
+                            color: [0.2, 0.5, 0.8].into(),
+                            physics_enabled: true,
                         },
                     ],
                 ),
@@ -50,10 +54,27 @@ impl State {
                         Object {
                             position: [-8.0, 3.0, -7.0].into(),
                             velocity: [3.0, 0.0, 2.0].into(),
+                            color: [0.8, 0.4, 0.7].into(),
+                            physics_enabled: false,
                         },
                         Object {
                             position: [-2.0, 0.0, -5.0].into(),
                             velocity: [0.0, 0.0, 0.0].into(),
+                            color: [0.2, 0.4, 0.2].into(),
+                            physics_enabled: true,
+                        },
+                    ],
+                ),
+                Objects::new(
+                    gl,
+                    program,
+                    objs::get_ground_obj(),
+                    vec![
+                        Object {
+                            position: [0.0, -3.0, -0.0].into(),
+                            velocity: [0.0, 0.0, 0.0].into(),
+                            color: [1.0, 1.0, 1.0].into(),
+                            physics_enabled: false,
                         },
                     ],
                 ),

@@ -12,6 +12,11 @@ pub fn get_suzanne_obj() -> obj::Obj {
     obj::load_obj(input).unwrap()
 }
 
+pub fn get_ground_obj() -> obj::Obj {
+    let input = BufReader::new(include_str!("./ground.obj").as_bytes());
+    obj::load_obj(input).unwrap()
+}
+
 pub fn set_positions(gl: &WebGl2RenderingContext, obj: &obj::Obj) -> i32 {
     unsafe {
         let positions: Vec<f32> = obj

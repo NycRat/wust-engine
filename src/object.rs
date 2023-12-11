@@ -7,6 +7,8 @@ use crate::{objs, transformations, utils, vec3::Vec3};
 pub struct Object {
     pub position: Vec3,
     pub velocity: Vec3,
+    pub color: Vec3,
+    pub physics_enabled: bool,
 }
 
 impl Object {
@@ -30,6 +32,15 @@ impl Object {
         let uniform_transformation_l = gl.get_uniform_location(&program, "u_transformation");
         let uniform_world_invserse_transposed_l =
             gl.get_uniform_location(&program, "u_world_inverse_transposed");
+        let uniform_color_l = gl.get_uniform_location(&program, "u_color");
+
+        gl.uniform4f(
+            uniform_color_l.as_ref(),
+            self.color.x,
+            self.color.y,
+            self.color.z,
+            1.0,
+        );
 
         gl.uniform_matrix4fv_with_f32_array(
             uniform_transformation_l.as_ref(),
@@ -45,6 +56,9 @@ impl Object {
     }
 
     pub fn update(&mut self, delta_time: f32) {
+        if !self.physics_enabled {
+            return;
+        }
         let gravity = Vec3::new(0.0, -10.0, 0.0);
         let force_of_friction = f32::abs(6.0 * gravity.y);
         self.position += self.velocity * delta_time;
@@ -147,8 +161,12 @@ impl Objects {
         view_matrix: [f32; 16],
     ) {
         let (size_x, size_y) = utils::get_window_size();
-        let projection_matrix =
-            transformations::perspective(std::f32::consts::PI / (3.0), size_x / size_y, 0.5, 200.0);
+        let projection_matrix = transformations::perspective(
+            std::f32::consts::PI / (3.0),
+            size_x / size_y,
+            0.01,
+            200.0,
+        );
 
         let view_projection_matrix = utils::matrix_multiply(projection_matrix, view_matrix);
 
