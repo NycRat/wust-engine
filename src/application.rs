@@ -3,11 +3,11 @@ use std::{cell::RefCell, rc::Rc};
 use wasm_bindgen::prelude::*;
 use web_sys::{HtmlCanvasElement, WebGl2RenderingContext, WebGlProgram};
 
-use crate::{objs, state::State, transformations, utils, vec3::Vec3};
+use crate::{state::State, transformations, utils};
 
 const SPEED: f32 = 8.0;
 
-pub struct Application {}
+pub struct Application;
 
 impl Application {
     pub fn init() -> Result<(), JsValue> {
@@ -206,8 +206,8 @@ impl Application {
             web_sys::console::error_1(&format!("DELTA_TIME: {delta_time}s").into());
             return;
         }
-        for objects in &mut state.objects_list {
-            objects.update(delta_time);
+        for object in &mut state.objects {
+            object.update(delta_time);
         }
     }
 
@@ -218,9 +218,26 @@ impl Application {
         );
 
         let view_matrix = utils::invert_matrix(camera_matrix);
+        let (size_x, size_y) = utils::get_window_size();
+        let projection_matrix = transformations::perspective(
+            std::f32::consts::PI / (3.0),
+            size_x / size_y,
+            0.01,
+            200.0,
+        );
+        let view_projection_matrix = utils::matrix_multiply(projection_matrix, view_matrix);
+
         gl.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT);
-        for objects in &state.objects_list {
-            objects.render(&gl, &program, view_matrix);
+
+        for object in &state.objects {
+            let object_type = &state.object_types[&object.object_type];
+            object.render(gl, program, view_projection_matrix);
+            gl.bind_vertex_array(object_type.vao.as_ref());
+            gl.draw_arrays(
+                WebGl2RenderingContext::TRIANGLES,
+                0,
+                object_type.vertices_len,
+            );
         }
     }
 }

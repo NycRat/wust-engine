@@ -3,7 +3,7 @@ use wasm_bindgen::prelude::*;
 pub mod application;
 pub mod mouse;
 pub mod object;
-pub mod objs;
+pub mod object_type;
 pub mod state;
 pub mod transformations;
 pub mod utils;

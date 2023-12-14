@@ -1,10 +1,11 @@
-use obj::Obj;
-use web_sys::{WebGl2RenderingContext, WebGlProgram, WebGlVertexArrayObject};
+use serde::Deserialize;
+use web_sys::{WebGl2RenderingContext, WebGlProgram};
 
-use crate::{objs, transformations, utils, vec3::Vec3};
+use crate::{transformations, utils, vec3::Vec3};
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct Object {
+    pub object_type: String,
     pub position: Vec3,
     pub velocity: Vec3,
     pub color: Vec3,
@@ -81,99 +82,6 @@ impl Object {
             if self.velocity.y.abs() < 0.5 {
                 self.velocity.y = 0.0;
             }
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct Objects {
-    // pub obj_data: Obj,
-    pub vertices_len: i32,
-    pub vao: Option<WebGlVertexArrayObject>,
-    pub objects: Vec<Object>,
-}
-
-impl Objects {
-    pub fn new(
-        gl: &WebGl2RenderingContext,
-        program: &WebGlProgram,
-        obj_data: Obj,
-        objects: Vec<Object>,
-    ) -> Self {
-        let position_location = gl.get_attrib_location(program, "a_pos") as u32;
-        let normal_location = gl.get_attrib_location(program, "a_normal") as u32;
-
-        let vao = gl.create_vertex_array();
-        gl.bind_vertex_array(vao.as_ref());
-
-        let vertices_buffer = gl.create_buffer();
-        gl.bind_buffer(
-            WebGl2RenderingContext::ARRAY_BUFFER,
-            vertices_buffer.as_ref(),
-        );
-
-        let vertices_len = objs::set_positions(gl, &obj_data);
-
-        gl.enable_vertex_attrib_array(position_location);
-        gl.vertex_attrib_pointer_with_i32(
-            position_location,
-            3,
-            WebGl2RenderingContext::FLOAT,
-            false,
-            0,
-            0,
-        );
-
-        let normal_buffer = gl.create_buffer();
-        gl.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, normal_buffer.as_ref());
-        objs::set_normals(gl, &obj_data);
-
-        gl.enable_vertex_attrib_array(normal_location);
-        gl.vertex_attrib_pointer_with_i32(
-            normal_location,
-            3,
-            WebGl2RenderingContext::FLOAT,
-            false,
-            0,
-            0,
-        );
-
-        Self {
-            // obj_data,
-            vertices_len,
-            vao,
-            objects,
-            // position: position.into(),
-            // velocity: velocity.into(),
-        }
-    }
-
-    pub fn update(&mut self, delta_time: f32) {
-        for object in &mut self.objects {
-            object.update(delta_time);
-        }
-    }
-
-    pub fn render(
-        &self,
-        gl: &WebGl2RenderingContext,
-        program: &WebGlProgram,
-        view_matrix: [f32; 16],
-    ) {
-        let (size_x, size_y) = utils::get_window_size();
-        let projection_matrix = transformations::perspective(
-            std::f32::consts::PI / (3.0),
-            size_x / size_y,
-            0.01,
-            200.0,
-        );
-
-        let view_projection_matrix = utils::matrix_multiply(projection_matrix, view_matrix);
-
-        for object in &self.objects {
-            object.render(gl, program, view_projection_matrix);
-            gl.bind_vertex_array(self.vao.as_ref());
-            gl.draw_arrays(WebGl2RenderingContext::TRIANGLES, 0, self.vertices_len);
         }
     }
 }

@@ -1,12 +1,8 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use web_sys::{WebGl2RenderingContext, WebGlProgram};
 
-use crate::{
-    mouse::Mouse,
-    object::{Object, Objects},
-    objs,
-};
+use crate::{mouse::Mouse, object::Object, object_type::ObjectType, utils};
 
 #[derive(Debug)]
 pub struct State {
@@ -15,7 +11,8 @@ pub struct State {
     pub pointer_locked: bool,
     pub mouse: Mouse,
     pub last_tick: f64,
-    pub objects_list: Vec<Objects>,
+    pub object_types: HashMap<String, ObjectType>,
+    pub objects: Vec<Object>,
 }
 
 impl State {
@@ -26,59 +23,22 @@ impl State {
             pointer_locked: false,
             mouse: Mouse::new(1.0 / 2500.0),
             last_tick: web_sys::js_sys::Date::now(),
-            objects_list: vec![
-                Objects::new(
-                    gl,
-                    program,
-                    objs::get_suzanne_obj(),
-                    vec![
-                        Object {
-                            position: [-5.0, 0.0, -3.0].into(),
-                            velocity: [3.0, 1.0, 2.0].into(),
-                            color: [0.8, 0.2, 0.8].into(),
-                            physics_enabled: true,
-                        },
-                        Object {
-                            position: [2.0, 1.0, -3.0].into(),
-                            velocity: [0.0, 0.0, 0.0].into(),
-                            color: [0.2, 0.5, 0.8].into(),
-                            physics_enabled: true,
-                        },
-                    ],
+            object_types: [
+                (
+                    "suzanne".into(),
+                    ObjectType::new(gl, program, utils::get_suzanne_obj()),
                 ),
-                Objects::new(
-                    gl,
-                    program,
-                    objs::get_cube_obj(),
-                    vec![
-                        Object {
-                            position: [-8.0, 3.0, -7.0].into(),
-                            velocity: [3.0, 0.0, 2.0].into(),
-                            color: [0.8, 0.4, 0.7].into(),
-                            physics_enabled: false,
-                        },
-                        Object {
-                            position: [-2.0, 0.0, -5.0].into(),
-                            velocity: [0.0, 0.0, 0.0].into(),
-                            color: [0.2, 0.4, 0.2].into(),
-                            physics_enabled: true,
-                        },
-                    ],
+                (
+                    "cube".into(),
+                    ObjectType::new(gl, program, utils::get_cube_obj()),
                 ),
-                Objects::new(
-                    gl,
-                    program,
-                    objs::get_ground_obj(),
-                    vec![
-                        Object {
-                            position: [0.0, -3.0, -0.0].into(),
-                            velocity: [0.0, 0.0, 0.0].into(),
-                            color: [1.0, 1.0, 1.0].into(),
-                            physics_enabled: false,
-                        },
-                    ],
+                (
+                    "ground".into(),
+                    ObjectType::new(gl, program, utils::get_ground_obj()),
                 ),
-            ],
+            ]
+            .into(),
+            objects: serde_json::from_str(include_str!("objects.json")).unwrap(),
         }
     }
 }

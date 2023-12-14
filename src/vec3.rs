@@ -1,6 +1,7 @@
+use serde::Deserialize;
 use std::ops::{AddAssign, Mul};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Deserialize)]
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,
