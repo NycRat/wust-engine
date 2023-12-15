@@ -28,6 +28,11 @@ pub fn create_program(
     return program;
 }
 
+pub fn get_sphere_obj() -> obj::Obj {
+    let input = BufReader::new(include_str!("./sphere.obj").as_bytes());
+    obj::load_obj(input).unwrap()
+}
+
 pub fn get_cube_obj() -> obj::Obj {
     let input = BufReader::new(include_str!("./cube.obj").as_bytes());
     obj::load_obj(input).unwrap()

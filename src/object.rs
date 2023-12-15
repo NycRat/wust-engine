@@ -6,14 +6,18 @@ use crate::{transformations, utils, vec3::Vec3};
 #[derive(Debug, Deserialize)]
 pub struct Object {
     pub object_type: String,
+
     pub position: Vec3,
     pub velocity: Vec3,
+    pub radius: f32,
+    pub mass: f32,
+
     pub color: Vec3,
     pub physics_enabled: bool,
 }
 
 impl Object {
-    pub fn render(
+    pub fn update_gl_uniforms(
         &self,
         gl: &WebGl2RenderingContext,
         program: &WebGlProgram,
@@ -61,7 +65,7 @@ impl Object {
             return;
         }
         let gravity = Vec3::new(0.0, -10.0, 0.0);
-        let force_of_friction = f32::abs(6.0 * gravity.y);
+        let force_of_friction = f32::abs(1.0 * gravity.y);
         self.position += self.velocity * delta_time;
         self.velocity += gravity * delta_time;
 
@@ -70,18 +74,52 @@ impl Object {
             self.position.y = -2.0;
 
             self.velocity.x = self.velocity.x.signum()
-                * f32::max(0.0, self.velocity.x.abs() - force_of_friction * delta_time);
+                * f32::max(0.0, self.velocity.x.abs() - force_of_friction * delta_time * 2.0);
 
             self.velocity.z = self.velocity.z.signum()
-                * f32::max(0.0, self.velocity.z.abs() - force_of_friction * delta_time);
+                * f32::max(0.0, self.velocity.z.abs() - force_of_friction * delta_time * 2.0);
 
             // BOUNCE
-            self.velocity.y *= -0.5;
+            self.velocity.y *= -0.4;
+            // self.velocity.y *= -0.0;
 
             // SPEED TOO LITTLE JUST STOP IT
             if self.velocity.y.abs() < 0.5 {
                 self.velocity.y = 0.0;
+                self.velocity.x = self.velocity.x.signum()
+                    * f32::max(0.0, self.velocity.x.abs() - force_of_friction * delta_time);
+
+                self.velocity.z = self.velocity.z.signum()
+                    * f32::max(0.0, self.velocity.z.abs() - force_of_friction * delta_time);
             }
+        } else {
+            self.velocity.x = self.velocity.x.signum()
+                * f32::max(
+                    0.0,
+                    self.velocity.x.abs() - force_of_friction * delta_time / 100.0,
+                );
+
+            self.velocity.z = self.velocity.z.signum()
+                * f32::max(
+                    0.0,
+                    self.velocity.z.abs() - force_of_friction * delta_time / 100.0,
+                );
         }
+    }
+
+    pub fn collides(&self, obj2: &Self) -> bool {
+        if !self.physics_enabled || !obj2.physics_enabled {
+            return false;
+        }
+        let x = f32::abs(self.position.x - obj2.position.x);
+        let y = f32::abs(self.position.y - obj2.position.y);
+        let z = f32::abs(self.position.z - obj2.position.z);
+        let distance = f32::sqrt(x * x + y * y + z * z);
+        // web_sys::console::log_1(&(self.position.x - obj2.position.x).into());
+        // web_sys::console::log_1(&distance.into());
+        if distance < self.radius + obj2.radius {
+            return true;
+        }
+        false
     }
 }

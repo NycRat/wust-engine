@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use wasm_bindgen::prelude::*;
 use web_sys::{HtmlCanvasElement, WebGl2RenderingContext, WebGlProgram};
 
-use crate::{state::State, transformations, utils};
+use crate::{object::Object, state::State, transformations, utils};
 
 const SPEED: f32 = 8.0;
 
@@ -53,7 +53,8 @@ impl Application {
 
         gl.use_program(Some(&program));
         gl.uniform3f(uniform_reverse_light_direction_l.as_ref(), 0.5, 0.7, 1.0);
-        gl.clear_color(0.2, 0.1, 0.2, 1.0);
+        // gl.clear_color(0.2, 0.1, 0.2, 1.0);
+        gl.clear_color(0.4, 0.4, 0.7, 1.0);
 
         {
             let state = state.clone();
@@ -121,16 +122,9 @@ impl Application {
             closure.forget();
         }
 
-        let update_closure = Rc::new(RefCell::new(None::<Closure<dyn FnMut()>>));
-        let update_closure2 = update_closure.clone();
-
         {
-            let gl = gl.clone();
             let state = state.clone();
-            let window = window.clone();
-
-            *update_closure2.borrow_mut() = Some(Closure::<dyn FnMut()>::new(move || {
-                let (size_x, size_y) = utils::get_window_size();
+            let closure = Closure::<dyn FnMut()>::new(move || {
                 let mut state = state.borrow_mut();
 
                 let now = web_sys::js_sys::Date::now();
@@ -157,6 +151,9 @@ impl Application {
                             state.camera_position[i] -= target[i] * SPEED * delta_time;
                         }
                     }
+                    if state.keys_pressed.contains("r") {
+                        state.reset();
+                    }
                     if state.keys_pressed.contains(" ") {
                         state.camera_position[1] += SPEED * delta_time;
                     }
@@ -172,6 +169,24 @@ impl Application {
                 // web_sys::console::log_1(&format!("{state:?}").into());
 
                 Self::update(&mut state, delta_time);
+            });
+            window
+                .set_interval_with_callback(closure.as_ref().unchecked_ref())
+                .unwrap();
+            closure.forget();
+        }
+
+        let update_closure = Rc::new(RefCell::new(None::<Closure<dyn FnMut()>>));
+        let update_closure2 = update_closure.clone();
+
+        {
+            let gl = gl.clone();
+            let state = state.clone();
+            let window = window.clone();
+
+            *update_closure2.borrow_mut() = Some(Closure::<dyn FnMut()>::new(move || {
+                let state = state.borrow();
+
                 Self::render(&gl, &program, &state);
 
                 window
@@ -209,6 +224,15 @@ impl Application {
         for object in &mut state.objects {
             object.update(delta_time);
         }
+        for i in 0..state.objects.len() {
+            for j in i + 1..state.objects.len() {
+                if Object::collides(&state.objects[i], &state.objects[j]) {
+                    web_sys::console::log_1(&"haha".into());
+                    state.objects[i].velocity.x *= -1.0;
+                    state.objects[j].velocity.x *= -1.0;
+                }
+            }
+        }
     }
 
     fn render(gl: &WebGl2RenderingContext, program: &WebGlProgram, state: &State) {
@@ -231,8 +255,9 @@ impl Application {
 
         for object in &state.objects {
             let object_type = &state.object_types[&object.object_type];
-            object.render(gl, program, view_projection_matrix);
             gl.bind_vertex_array(object_type.vao.as_ref());
+
+            object.update_gl_uniforms(gl, program, view_projection_matrix);
             gl.draw_arrays(
                 WebGl2RenderingContext::TRIANGLES,
                 0,

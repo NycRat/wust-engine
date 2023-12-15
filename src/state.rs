@@ -33,6 +33,10 @@ impl State {
                     ObjectType::new(gl, program, utils::get_cube_obj()),
                 ),
                 (
+                    "sphere".into(),
+                    ObjectType::new(gl, program, utils::get_sphere_obj()),
+                ),
+                (
                     "ground".into(),
                     ObjectType::new(gl, program, utils::get_ground_obj()),
                 ),
@@ -40,5 +44,8 @@ impl State {
             .into(),
             objects: serde_json::from_str(include_str!("objects.json")).unwrap(),
         }
+    }
+    pub fn reset(&mut self) {
+        self.objects = serde_json::from_str(include_str!("objects.json")).unwrap();
     }
 }
