@@ -230,8 +230,8 @@ impl Application {
             for j in i + 1..state.objects.len() {
                 if Object::collides(&state.objects[i], &state.objects[j]) {
                     // web_sys::console::log_1(&"haha".into());
-                    // state.objects[i].velocity.x *= -1.0;
-                    // state.objects[j].velocity.x *= -1.0;
+                    state.objects[i].velocity.x *= -1.0;
+                    state.objects[j].velocity.x *= -1.0;
                 }
             }
         }
