@@ -239,8 +239,8 @@ impl Application {
 
     fn render(gl: &WebGl2RenderingContext, program: &WebGlProgram, state: &State) {
         let camera_matrix = transformations::look_at(
-            &state.camera_position,
-            &state.mouse.get_look_at_target(&state.camera_position),
+            &state.camera_position.into(),
+            &state.mouse.get_look_at_target(&state.camera_position.into()),
         );
 
         let view_matrix = utils::invert_matrix(camera_matrix);
