@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use std::ops::{AddAssign, Mul};
+use std::ops::{Add, AddAssign, Mul};
 
 #[derive(Clone, Copy, Debug, Deserialize)]
 pub struct Vec3 {
@@ -11,6 +11,18 @@ pub struct Vec3 {
 impl Vec3 {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
+    }
+}
+
+impl Add<Vec3> for Vec3 {
+    type Output = Vec3;
+
+    fn add(self, rhs: Vec3) -> Self::Output {
+        Vec3 {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+        }
     }
 }
 

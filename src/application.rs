@@ -151,15 +151,15 @@ impl Application {
                             state.camera_position[i] -= target[i] * SPEED * delta_time;
                         }
                     }
-                    if state.keys_pressed.contains("r") {
-                        state.reset();
-                    }
                     if state.keys_pressed.contains(" ") {
                         state.camera_position[1] += SPEED * delta_time;
                     }
                     if state.keys_pressed.contains("shift") {
                         state.camera_position[1] -= SPEED * delta_time;
                     }
+                }
+                if state.keys_pressed.contains("r") {
+                    state.reset();
                 }
 
                 if state.camera_position[1] < -2.99 {
@@ -218,7 +218,9 @@ impl Application {
 
     fn update(state: &mut State, delta_time: f32) {
         if delta_time > 0.1 {
-            web_sys::console::error_1(&format!("DELTA_TIME: {delta_time}s").into());
+            web_sys::console::error_1(
+                &format!("DELTA_TIME: {delta_time}s // DELTA_TIME TOO LARGE").into(),
+            );
             return;
         }
         for object in &mut state.objects {
@@ -227,9 +229,9 @@ impl Application {
         for i in 0..state.objects.len() {
             for j in i + 1..state.objects.len() {
                 if Object::collides(&state.objects[i], &state.objects[j]) {
-                    web_sys::console::log_1(&"haha".into());
-                    state.objects[i].velocity.x *= -1.0;
-                    state.objects[j].velocity.x *= -1.0;
+                    // web_sys::console::log_1(&"haha".into());
+                    // state.objects[i].velocity.x *= -1.0;
+                    // state.objects[j].velocity.x *= -1.0;
                 }
             }
         }
